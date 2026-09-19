@@ -1,4 +1,4 @@
-from personal_email_digest.digest import build_digest_markdown
+from personal_email_digest.digest import build_digest_html, build_digest_markdown
 from personal_email_digest.gmail_client import EmailSummary
 
 
@@ -60,3 +60,31 @@ def test_truncates_long_snippets():
 def test_gmail_link_uses_thread_id():
     email_summary = make_email(thread_id="abc123")
     assert email_summary.gmail_link == "https://mail.google.com/mail/u/0/#all/abc123"
+
+
+def test_html_digest_empty():
+    result = build_digest_html([], "last 24h")
+    assert "No new emails" in result
+    assert "last 24h" in result
+
+
+def test_html_digest_escapes_untrusted_content():
+    emails = [make_email(subject="<script>alert(1)</script>", snippet="safe & sound")]
+    result = build_digest_html(emails, "last 24h")
+
+    assert "<script>" not in result
+    assert "&lt;script&gt;" in result
+    assert "safe &amp; sound" in result
+
+
+def test_html_digest_groups_by_sender():
+    emails = [
+        make_email(message_id="1", subject="First"),
+        make_email(message_id="2", sender='"Bob" <bob@example.com>', subject="Second", unread=False),
+    ]
+    result = build_digest_html(emails, "last 24h")
+
+    assert "<h2>Alice Example (1)</h2>" in result
+    assert "<h2>Bob (1)</h2>" in result
+    assert "<strong>First</strong>" in result
+    assert "<strong>Second</strong>" in result
