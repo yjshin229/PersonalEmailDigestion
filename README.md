@@ -35,8 +35,11 @@ email-digest
 # Digest of the last 3 days, written to a file
 email-digest --hours 72 --output digest.md
 
+# Only unread messages from the last 3 days
+email-digest --hours 72 --unread-only
+
 # Custom Gmail search query instead of a time window
-email-digest --query "is:unread label:important"
+email-digest --query "label:important"
 
 # Generate the digest and email it to yourself
 email-digest --send-to you@example.com

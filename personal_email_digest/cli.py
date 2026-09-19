@@ -19,6 +19,11 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         default=None,
         help="Custom Gmail search query, overriding --hours (e.g. 'is:unread label:important').",
     )
+    parser.add_argument(
+        "--unread-only",
+        action="store_true",
+        help="Only include unread messages (composes with --hours or --query).",
+    )
     parser.add_argument("--max-results", type=int, default=50, help="Maximum number of emails to include.")
     parser.add_argument(
         "--output", type=Path, default=None, help="Write digest to this file instead of stdout."
@@ -34,6 +39,9 @@ def main(argv: list[str] | None = None) -> int:
 
     query = args.query or f"newer_than:{args.hours}h"
     window_label = args.query or f"last {args.hours}h"
+    if args.unread_only:
+        query += " is:unread"
+        window_label += ", unread only"
 
     service = build_gmail_service(args.credentials, args.token)
     emails = fetch_messages(service, query=query, max_results=args.max_results)

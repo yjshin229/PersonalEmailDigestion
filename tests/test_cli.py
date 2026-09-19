@@ -47,6 +47,36 @@ def test_main_writes_digest_to_output_file(monkeypatch, tmp_path):
     assert "**Hello**" in output_path.read_text()
 
 
+def test_main_unread_only_composes_with_hours(monkeypatch):
+    monkeypatch.setattr(cli, "build_gmail_service", lambda credentials, token: "fake-service")
+    captured_query = {}
+
+    def fake_fetch_messages(service, query, max_results):
+        captured_query["query"] = query
+        return []
+
+    monkeypatch.setattr(cli, "fetch_messages", fake_fetch_messages)
+
+    cli.main(["--hours", "6", "--unread-only"])
+
+    assert captured_query["query"] == "newer_than:6h is:unread"
+
+
+def test_main_unread_only_composes_with_custom_query(monkeypatch):
+    monkeypatch.setattr(cli, "build_gmail_service", lambda credentials, token: "fake-service")
+    captured_query = {}
+
+    def fake_fetch_messages(service, query, max_results):
+        captured_query["query"] = query
+        return []
+
+    monkeypatch.setattr(cli, "fetch_messages", fake_fetch_messages)
+
+    cli.main(["--query", "label:important", "--unread-only"])
+
+    assert captured_query["query"] == "label:important is:unread"
+
+
 def test_main_uses_custom_query_over_hours(monkeypatch, capsys):
     monkeypatch.setattr(cli, "build_gmail_service", lambda credentials, token: "fake-service")
     captured_query = {}
