@@ -49,6 +49,7 @@ Run `email-digest --help` for all options.
 ```bash
 pip install -e ".[dev]"
 pytest
+ruff check .
 ```
 
 `credentials.json` and `token.json` hold real credentials and are gitignored

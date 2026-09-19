@@ -20,7 +20,9 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         help="Custom Gmail search query, overriding --hours (e.g. 'is:unread label:important').",
     )
     parser.add_argument("--max-results", type=int, default=50, help="Maximum number of emails to include.")
-    parser.add_argument("--output", type=Path, default=None, help="Write digest to this file instead of stdout.")
+    parser.add_argument(
+        "--output", type=Path, default=None, help="Write digest to this file instead of stdout."
+    )
     parser.add_argument("--send-to", default=None, help="Email address to send the digest to via Gmail.")
     parser.add_argument("--credentials", type=Path, default=DEFAULT_CREDENTIALS_PATH)
     parser.add_argument("--token", type=Path, default=DEFAULT_TOKEN_PATH)
