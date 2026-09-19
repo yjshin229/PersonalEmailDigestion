@@ -7,6 +7,14 @@ from dataclasses import dataclass
 
 from googleapiclient.discovery import Resource
 
+CATEGORY_LABELS = {
+    "CATEGORY_PERSONAL": "Primary",
+    "CATEGORY_SOCIAL": "Social",
+    "CATEGORY_PROMOTIONS": "Promotions",
+    "CATEGORY_UPDATES": "Updates",
+    "CATEGORY_FORUMS": "Forums",
+}
+
 
 @dataclass(frozen=True)
 class EmailSummary:
@@ -17,10 +25,18 @@ class EmailSummary:
     date: str
     snippet: str
     unread: bool
+    category: str = "Primary"
 
     @property
     def gmail_link(self) -> str:
         return f"https://mail.google.com/mail/u/0/#all/{self.thread_id}"
+
+
+def _category(label_ids: list[str]) -> str:
+    for label_id in label_ids:
+        if label_id in CATEGORY_LABELS:
+            return CATEGORY_LABELS[label_id]
+    return "Primary"
 
 
 def _header(headers: list[dict], name: str) -> str:
@@ -52,6 +68,7 @@ def fetch_messages(
             .execute()
         )
         headers = msg.get("payload", {}).get("headers", [])
+        label_ids = msg.get("labelIds", [])
         summaries.append(
             EmailSummary(
                 message_id=msg["id"],
@@ -60,7 +77,8 @@ def fetch_messages(
                 subject=_header(headers, "Subject") or "(no subject)",
                 date=_header(headers, "Date"),
                 snippet=msg.get("snippet", ""),
-                unread="UNREAD" in msg.get("labelIds", []),
+                unread="UNREAD" in label_ids,
+                category=_category(label_ids),
             )
         )
     return summaries

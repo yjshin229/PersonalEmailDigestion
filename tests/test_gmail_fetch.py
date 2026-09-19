@@ -38,6 +38,32 @@ def test_fetch_messages_parses_headers_and_unread_flag():
     assert email_summary.unread is True
 
 
+def test_fetch_messages_parses_category_label():
+    mock_service = MagicMock()
+    messages = mock_service.users.return_value.messages.return_value
+    messages.list.return_value.execute.return_value = {"messages": [{"id": "1"}]}
+    messages.list_next.return_value = None
+    payload = _message_payload("1", "t1", "Sale!", unread=True)
+    payload["labelIds"] = ["UNREAD", "CATEGORY_PROMOTIONS"]
+    messages.get.return_value.execute.return_value = payload
+
+    result = fetch_messages(mock_service, max_results=10)
+
+    assert result[0].category == "Promotions"
+
+
+def test_fetch_messages_defaults_to_primary_category():
+    mock_service = MagicMock()
+    messages = mock_service.users.return_value.messages.return_value
+    messages.list.return_value.execute.return_value = {"messages": [{"id": "1"}]}
+    messages.list_next.return_value = None
+    messages.get.return_value.execute.return_value = _message_payload("1", "t1", "Hi", unread=False)
+
+    result = fetch_messages(mock_service, max_results=10)
+
+    assert result[0].category == "Primary"
+
+
 def test_fetch_messages_missing_subject_gets_placeholder():
     mock_service = MagicMock()
     messages = mock_service.users.return_value.messages.return_value

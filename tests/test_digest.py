@@ -88,3 +88,24 @@ def test_html_digest_groups_by_sender():
     assert "<h2>Bob (1)</h2>" in result
     assert "<strong>First</strong>" in result
     assert "<strong>Second</strong>" in result
+
+
+def test_markdown_digest_shows_category_breakdown():
+    emails = [
+        make_email(message_id="1", category="Primary"),
+        make_email(message_id="2", category="Promotions"),
+        make_email(message_id="3", category="Promotions"),
+    ]
+    result = build_digest_markdown(emails, "last 24h")
+
+    assert "By category: Promotions 2, Primary 1" in result
+
+
+def test_html_digest_shows_category_breakdown():
+    emails = [
+        make_email(message_id="1", category="Updates"),
+        make_email(message_id="2", category="Updates"),
+    ]
+    result = build_digest_html(emails, "last 24h")
+
+    assert "By category: Updates 2" in result
