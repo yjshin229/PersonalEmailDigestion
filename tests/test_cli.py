@@ -115,6 +115,46 @@ def test_main_sends_digest_email_when_requested(monkeypatch):
     assert "<strong>Hello</strong>" in sent["body_html"]
 
 
+def test_main_daemon_mode_loops_until_interrupted(monkeypatch):
+    monkeypatch.setattr(cli, "build_gmail_service", lambda credentials, token: "fake-service")
+
+    run_count = {"n": 0}
+
+    def fake_fetch_messages(service, query, max_results):
+        run_count["n"] += 1
+        return []
+
+    monkeypatch.setattr(cli, "fetch_messages", fake_fetch_messages)
+
+    sleep_calls = []
+
+    def fake_sleep(seconds):
+        sleep_calls.append(seconds)
+        raise KeyboardInterrupt
+
+    monkeypatch.setattr(cli.time, "sleep", fake_sleep)
+
+    exit_code = cli.main(["--daemon", "--interval-minutes", "5"])
+
+    assert exit_code == 0
+    assert run_count["n"] == 1
+    assert sleep_calls == [300]
+
+
+def test_main_does_not_loop_without_daemon_flag(monkeypatch):
+    monkeypatch.setattr(cli, "build_gmail_service", lambda credentials, token: "fake-service")
+    monkeypatch.setattr(cli, "fetch_messages", lambda service, query, max_results: [])
+
+    def fail_if_called(seconds):
+        raise AssertionError("time.sleep should not be called outside --daemon mode")
+
+    monkeypatch.setattr(cli.time, "sleep", fail_if_called)
+
+    exit_code = cli.main([])
+
+    assert exit_code == 0
+
+
 def test_main_does_not_send_email_by_default(monkeypatch):
     monkeypatch.setattr(cli, "build_gmail_service", lambda credentials, token: "fake-service")
     monkeypatch.setattr(cli, "fetch_messages", lambda service, query, max_results: [make_email()])

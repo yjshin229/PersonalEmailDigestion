@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import sys
+import time
 from pathlib import Path
 
 from personal_email_digest.auth import DEFAULT_CREDENTIALS_PATH, DEFAULT_TOKEN_PATH, build_gmail_service
@@ -31,19 +32,32 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--send-to", default=None, help="Email address to send the digest to via Gmail.")
     parser.add_argument("--credentials", type=Path, default=DEFAULT_CREDENTIALS_PATH)
     parser.add_argument("--token", type=Path, default=DEFAULT_TOKEN_PATH)
+    parser.add_argument(
+        "--daemon",
+        action="store_true",
+        help="Run continuously, generating a fresh digest every --interval-minutes instead of exiting.",
+    )
+    parser.add_argument(
+        "--interval-minutes",
+        type=int,
+        default=60,
+        help="How often to regenerate the digest in --daemon mode (default: 60).",
+    )
     return parser.parse_args(argv)
 
 
-def main(argv: list[str] | None = None) -> int:
-    args = parse_args(argv)
-
+def _build_query_and_label(args: argparse.Namespace) -> tuple[str, str]:
     query = args.query or f"newer_than:{args.hours}h"
     window_label = args.query or f"last {args.hours}h"
     if args.unread_only:
         query += " is:unread"
         window_label += ", unread only"
+    return query, window_label
 
-    service = build_gmail_service(args.credentials, args.token)
+
+def run_once(args: argparse.Namespace, service) -> None:
+    query, window_label = _build_query_and_label(args)
+
     emails = fetch_messages(service, query=query, max_results=args.max_results)
     digest_markdown = build_digest_markdown(emails, window_label)
 
@@ -57,6 +71,27 @@ def main(argv: list[str] | None = None) -> int:
         send_digest_email(
             service, args.send_to, f"Your Email Digest ({window_label})", digest_markdown, digest_html
         )
+
+
+def main(argv: list[str] | None = None) -> int:
+    args = parse_args(argv)
+    service = build_gmail_service(args.credentials, args.token)
+
+    if not args.daemon:
+        run_once(args, service)
+        return 0
+
+    print(
+        f"Running in daemon mode: generating a digest every {args.interval_minutes} minute(s). "
+        "Press Ctrl+C to stop.",
+        file=sys.stderr,
+    )
+    try:
+        while True:
+            run_once(args, service)
+            time.sleep(args.interval_minutes * 60)
+    except KeyboardInterrupt:
+        pass
 
     return 0
 

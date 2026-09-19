@@ -47,6 +47,48 @@ email-digest --send-to you@example.com
 
 Run `email-digest --help` for all options.
 
+## Scheduling
+
+Run the digest automatically, so it's waiting for you instead of something
+you have to remember to run.
+
+**Built-in daemon mode** — keeps running and regenerates the digest on an
+interval (useful in a container or a background process manager):
+
+```bash
+email-digest --daemon --interval-minutes 60 --send-to you@example.com
+```
+
+**cron** (Linux/macOS) — e.g. every morning at 7am, run `crontab -e` and add:
+
+```cron
+0 7 * * * cd /path/to/PersonalEmailDigestion && .venv/bin/email-digest --send-to you@example.com >> digest.log 2>&1
+```
+
+**systemd timer** (Linux) — create `~/.config/systemd/user/email-digest.service`:
+
+```ini
+[Service]
+WorkingDirectory=/path/to/PersonalEmailDigestion
+ExecStart=/path/to/PersonalEmailDigestion/.venv/bin/email-digest --send-to you@example.com
+```
+
+and `~/.config/systemd/user/email-digest.timer`:
+
+```ini
+[Timer]
+OnCalendar=*-*-* 07:00:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target
+```
+
+then `systemctl --user enable --now email-digest.timer`.
+
+Either way, run the tool interactively once first so the OAuth consent flow
+completes and `token.json` is cached — a scheduled run can't open a browser.
+
 ## Development
 
 ```bash
