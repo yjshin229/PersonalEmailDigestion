@@ -7,7 +7,7 @@ import sys
 from pathlib import Path
 
 from personal_email_digest.auth import DEFAULT_CREDENTIALS_PATH, DEFAULT_TOKEN_PATH, build_gmail_service
-from personal_email_digest.digest import build_digest_markdown
+from personal_email_digest.digest import build_digest_html, build_digest_markdown
 from personal_email_digest.gmail_client import fetch_messages, send_digest_email
 
 
@@ -43,7 +43,10 @@ def main(argv: list[str] | None = None) -> int:
         sys.stdout.write(digest_markdown)
 
     if args.send_to:
-        send_digest_email(service, args.send_to, f"Your Email Digest ({window_label})", digest_markdown)
+        digest_html = build_digest_html(emails, window_label)
+        send_digest_email(
+            service, args.send_to, f"Your Email Digest ({window_label})", digest_markdown, digest_html
+        )
 
     return 0
 

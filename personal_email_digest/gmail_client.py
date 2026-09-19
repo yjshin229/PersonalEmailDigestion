@@ -66,11 +66,24 @@ def fetch_messages(
     return summaries
 
 
-def send_digest_email(service: Resource, to_address: str, subject: str, body_markdown: str) -> str:
-    """Send the digest as a plain-text email to the given address. Returns the sent message id."""
-    import email.mime.text
+def send_digest_email(
+    service: Resource,
+    to_address: str,
+    subject: str,
+    body_text: str,
+    body_html: str | None = None,
+) -> str:
+    """Send the digest to the given address, as HTML with a plain-text fallback when provided."""
+    from email.mime.multipart import MIMEMultipart
+    from email.mime.text import MIMEText
 
-    message = email.mime.text.MIMEText(body_markdown)
+    if body_html:
+        message = MIMEMultipart("alternative")
+        message.attach(MIMEText(body_text, "plain"))
+        message.attach(MIMEText(body_html, "html"))
+    else:
+        message = MIMEText(body_text)
+
     message["to"] = to_address
     message["subject"] = subject
     raw = base64.urlsafe_b64encode(message.as_bytes()).decode()
