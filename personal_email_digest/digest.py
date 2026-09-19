@@ -28,6 +28,18 @@ def _group_by_sender(emails: list[EmailSummary]) -> dict[str, list[EmailSummary]
     return dict(sorted(by_sender.items(), key=lambda item: -len(item[1])))
 
 
+def _category_counts(emails: list[EmailSummary]) -> dict[str, int]:
+    counts: dict[str, int] = defaultdict(int)
+    for email_summary in emails:
+        counts[email_summary.category] += 1
+    return dict(sorted(counts.items(), key=lambda item: -item[1]))
+
+
+def _category_summary_text(emails: list[EmailSummary]) -> str:
+    counts = _category_counts(emails)
+    return "By category: " + ", ".join(f"{category} {count}" for category, count in counts.items())
+
+
 def build_digest_markdown(emails: list[EmailSummary], window_label: str) -> str:
     """Render a Markdown digest grouping emails by sender, newest-looking first."""
     if not emails:
@@ -40,6 +52,7 @@ def build_digest_markdown(emails: list[EmailSummary], window_label: str) -> str:
         f"# Email Digest ({window_label})",
         "",
         f"{len(emails)} email(s) from {len(by_sender)} sender(s), {unread_count} unread.",
+        _category_summary_text(emails),
         "",
     ]
 
@@ -66,6 +79,7 @@ def build_digest_html(emails: list[EmailSummary], window_label: str) -> str:
     parts = [
         f"<h1>{title}</h1>",
         f"<p>{len(emails)} email(s) from {len(by_sender)} sender(s), {unread_count} unread.</p>",
+        f"<p>{html.escape(_category_summary_text(emails))}</p>",
     ]
 
     for sender, sender_emails in by_sender.items():
