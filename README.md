@@ -10,16 +10,17 @@ links back to each message.
    project, enable the **Gmail API**, and create an OAuth client ID of type
    "Desktop app". Download the client secrets and save them as
    `credentials.json` in the project root.
-2. Install dependencies:
+2. Install the package (editable install also gives you the `email-digest` command):
 
    ```bash
-   pip install -r requirements.txt
+   pip install -e .
    ```
 
 3. Run the digest:
 
    ```bash
-   python -m personal_email_digest.cli
+   email-digest
+   # or: python -m personal_email_digest.cli
    ```
 
    The first run opens a browser to complete the OAuth consent flow and
@@ -29,24 +30,24 @@ links back to each message.
 
 ```bash
 # Digest of the last 24 hours (default), printed to stdout
-python -m personal_email_digest.cli
+email-digest
 
 # Digest of the last 3 days, written to a file
-python -m personal_email_digest.cli --hours 72 --output digest.md
+email-digest --hours 72 --output digest.md
 
 # Custom Gmail search query instead of a time window
-python -m personal_email_digest.cli --query "is:unread label:important"
+email-digest --query "is:unread label:important"
 
 # Generate the digest and email it to yourself
-python -m personal_email_digest.cli --send-to you@example.com
+email-digest --send-to you@example.com
 ```
 
-Run `python -m personal_email_digest.cli --help` for all options.
+Run `email-digest --help` for all options.
 
 ## Development
 
 ```bash
-pip install -r requirements-dev.txt
+pip install -e ".[dev]"
 pytest
 ```
 

@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "personal-email-digest"
+version = "0.1.0"
+description = "Summarize recent Gmail messages into a readable digest."
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "google-api-python-client>=2.100.0",
+    "google-auth-httplib2>=0.2.0",
+    "google-auth-oauthlib>=1.2.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0.0"]
+
+[project.scripts]
+email-digest = "personal_email_digest.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["personal_email_digest*"]
