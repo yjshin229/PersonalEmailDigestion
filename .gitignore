@@ -216,3 +216,7 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Gmail OAuth credentials (never commit)
+credentials.json
+token.json
